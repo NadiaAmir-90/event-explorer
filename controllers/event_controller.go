@@ -1,106 +1,144 @@
 package controllers
 
 import (
-	"html/template"
+	"context"
 	"net/http"
 	"strings"
 
 	"github.com/beego/beego/v2/server/web"
 
-	"event-explorer/models"
+	"event-explorer/services"
 )
 
 type EventController struct {
 	web.Controller
-	APIClient *models.APIClient
-	Template  *template.Template
+	EventService *services.EventService
 }
 
-type EventPageData struct {
+type ListingPageData struct {
 	Title       string
-	Query       string
-	Category    string
-	Events      []models.Event
+	City        string
+	CountryCode string
+
+	MusicEvents  interface{} // renamed from Music
+    SportsEvents interface{}
+
 	Error       string
 	HasSearched bool
 }
 
-func NewEventController(apiClient *models.APIClient) *EventController {
-	tmpl := template.Must(
-		template.ParseFiles("views/index.html"),
+type DetailsPageData struct {
+	Title       string
+	Event       interface{}
+	City        string
+	CountryCode string
+	Error       string
+}
+
+func (c *EventController) List() {
+
+	city := strings.TrimSpace(
+		c.Ctx.Input.Query("city"),
 	)
 
-	return &EventController{
-		APIClient: apiClient,
-		Template:  tmpl,
-	}
-}
+	countryCode := strings.ToUpper(
+		strings.TrimSpace(
+			c.Ctx.Input.Query("countryCode"),
+		),
+	)
 
-// Get handles GET /.
-//
-// It displays the main Event Explorer page without performing
-// an API search.
-func (c *EventController) Get() {
-	c.render(EventPageData{
-		Title:       "Event Explorer",
-		Events:      []models.Event{},
-		HasSearched: false,
-	})
-}
-
-// Search handles GET /search.
-//
-// Example:
-//
-//	/search?query=concert&category=Music
-func (c *EventController) Search() {
-	query := strings.TrimSpace(c.Ctx.Input.Query("query"))
-	category := strings.TrimSpace(c.Ctx.Input.Query("category"))
-
-	data := EventPageData{
-		Title:       "Search Results",
-		Query:       query,
-		Category:    category,
-		Events:      []models.Event{},
-		HasSearched: true,
+	data := ListingPageData{
+		Title:       "Events",
+		City:        city,
+		CountryCode: countryCode,
+		MusicEvents :      []interface{}{},
+		SportsEvents:      []interface{}{},
+		HasSearched: city != "" && countryCode != "",
 	}
 
-	if c.APIClient == nil {
-		data.Error = "Event API client is not configured."
-		c.render(data)
+	if city == "" || countryCode == "" {
+		data.Error = "Please select a city first."
+		c.TplName = "listing.tpl"
+		c.Data["Page"] = data
 		return
 	}
 
-	requestURL := c.APIClient.BuildSearchURL(query, category)
+	if c.EventService == nil {
+		data.Error = "Event service is not configured."
+		c.TplName = "listing.tpl"
+		c.Data["Page"] = data
+		return
+	}
 
-	events, err := c.APIClient.FetchEventsConcurrent(
-		[]string{requestURL},
+	events, err := c.EventService.ListEvents(
+		context.Background(),
+		city,
+		countryCode,
 	)
 
 	if err != nil {
 		data.Error = "Unable to load events. Please try again."
-		c.render(data)
-		return
 	}
 
-	data.Events = events
+	if music, ok := events["Music"]; ok {
+		data.MusicEvents = music
+	}
 
-	c.render(data)
+	if sports, ok := events["Sports"]; ok {
+		data.SportsEvents = sports
+	}
+
+	c.TplName = "listing.tpl"
+	c.Data["Page"] = data
 }
 
-func (c *EventController) render(data EventPageData) {
-	if c.Template == nil {
-		c.Ctx.ResponseWriter.WriteHeader(http.StatusInternalServerError)
-		_, _ = c.Ctx.ResponseWriter.Write([]byte("Template is not configured"))
+func (c *EventController) Details() {
+
+	eventID := strings.TrimSpace(
+		c.Ctx.Input.Param(":eventId"),
+	)
+
+	data := DetailsPageData{
+		Title: "Event Details",
+	}
+
+	if eventID == "" {
+		data.Error = "Invalid event."
+		c.Ctx.ResponseWriter.WriteHeader(
+			http.StatusBadRequest,
+		)
+		c.TplName = "details.tpl"
+		c.Data["Page"] = data
 		return
 	}
 
-	if err := c.Template.Execute(
-		c.Ctx.ResponseWriter,
-		data,
-	); err != nil {
-		// The response may already have started, so we only log the
-		// rendering error here.
+	if c.EventService == nil {
+		data.Error = "Event service is not configured."
+		c.Ctx.ResponseWriter.WriteHeader(
+			http.StatusInternalServerError,
+		)
+		c.TplName = "details.tpl"
+		c.Data["Page"] = data
 		return
 	}
+
+	event, err := c.EventService.GetEventDetails(
+		context.Background(),
+		eventID,
+	)
+
+	if err != nil {
+		data.Error = "Event not found."
+		c.Ctx.ResponseWriter.WriteHeader(
+			http.StatusNotFound,
+		)
+		c.TplName = "details.tpl"
+		c.Data["Page"] = data
+		return
+	}
+
+	data.Event = event
+
+	c.TplName = "details.tpl"
+	c.Data["Page"] = data
 }
