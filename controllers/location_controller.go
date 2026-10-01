@@ -102,7 +102,6 @@ func (c *LocationController) Autocomplete() {
 	c.ServeJSON()
 }
 
-
 // ==================================================
 // GET /api/locations/:placeId
 // ==================================================
@@ -116,7 +115,6 @@ func (c *LocationController) Details() {
 	sessionToken := strings.TrimSpace(
 		c.Ctx.Input.Query("sessionToken"),
 	)
-
 
 	if placeID == "" {
 

@@ -6,7 +6,7 @@
 
     <title>{{.Page.City}} Events - Event Explorer</title>
 
-    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2">
 </head>
 
 <body>

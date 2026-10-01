@@ -16,11 +16,9 @@ func NewCache() *Cache {
 }
 
 // GetOrFetch returns a cached value if it exists.
-//
 // On cache hit:
 //   - returns the cached value
 //   - keeps the value in the cache
-//
 // On cache miss:
 //   - calls fetch()
 //   - stores the returned value

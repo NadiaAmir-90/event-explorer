@@ -220,9 +220,7 @@ func (a *APIClient) buildCategoryURL(
 	return u + "?" + params.Encode()
 }
 
-// FetchEventsConcurrent fetches multiple resources concurrently.
-//
-// This method is retained because existing tests/code may use it.
+// FetchEventsConcurrent fetches multiple resources concurrently..
 func (a *APIClient) FetchEventsConcurrent(
 	urls []string,
 ) ([]Event, error) {
@@ -280,16 +278,7 @@ func (a *APIClient) FetchEventsConcurrent(
 }
 
 // fetchWithCache uses the shared cache.
-//
-// Cache behavior:
-//
-// First request:
-// MISS -> fetch -> store -> return
-//
-// Next requests:
-// HIT -> return cached data
-//
-// Cache stays until Clear/ClearAll is called.
+
 func (a *APIClient) fetchWithCache(
 	requestURL string,
 ) ([]Event, error) {
@@ -507,6 +496,7 @@ func (a *APIClient) GetEventDetails(
 
 	return raw.toEvent(), nil
 }
+
 type ticketmasterResponse struct {
 	Embedded *struct {
 		Events []ticketmasterEvent `json:"events"`
@@ -518,6 +508,7 @@ type ticketmasterEvent struct {
 	Name        string `json:"name"`
 	URL         string `json:"url"`
 	Description string `json:"description"`
+	PleaseNote  string `json:"pleaseNote"`
 
 	Images []struct {
 		URL string `json:"url"`
@@ -534,19 +525,29 @@ type ticketmasterEvent struct {
 		Segment struct {
 			Name string `json:"name"`
 		} `json:"segment"`
+
+		Genre struct {
+			Name string `json:"name"`
+		} `json:"genre"`
 	} `json:"classifications"`
 
 	Embedded *struct {
 		Venues []struct {
 			Name string `json:"name"`
+
 			City struct {
 				Name string `json:"name"`
 			} `json:"city"`
+
+			State struct {
+				StateCode string `json:"stateCode"`
+			} `json:"state"`
 		} `json:"venues"`
 	} `json:"_embedded"`
 }
 
 func (raw ticketmasterEvent) toEvent() Event {
+
 	location := ""
 
 	if raw.Embedded != nil &&
@@ -559,12 +560,26 @@ func (raw ticketmasterEvent) toEvent() Event {
 		if venue.City.Name != "" {
 			location += ", " + venue.City.Name
 		}
+
+		if venue.State.StateCode != "" {
+			location += ", " + venue.State.StateCode
+		}
 	}
 
 	category := ""
 
 	if len(raw.Classifications) > 0 {
-		category = raw.Classifications[0].Segment.Name
+
+		segment := raw.Classifications[0].Segment.Name
+		genre := raw.Classifications[0].Genre.Name
+
+		if segment != "" {
+			category = segment
+		}
+
+		if genre != "" {
+			category += " / " + genre
+		}
 	}
 
 	imageURL := ""
@@ -573,13 +588,19 @@ func (raw ticketmasterEvent) toEvent() Event {
 		imageURL = raw.Images[0].URL
 	}
 
+	description := raw.Description
+
+	if description == "" {
+		description = raw.PleaseNote
+	}
+
 	return Event{
 		ID:          raw.ID,
 		Title:       raw.Name,
 		Category:    category,
 		Location:    location,
 		Date:        raw.Dates.Start.LocalDate,
-		Description: raw.Description,
+		Description: description,
 		ImageURL:    imageURL,
 		TicketURL:   raw.URL,
 	}

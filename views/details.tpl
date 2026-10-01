@@ -10,12 +10,16 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>{{.Page.Title}}</title>
+    <title>
+        {{if .Page.Event}}
+            {{.Page.Event.Title}}
+        {{else}}
+            Event Details
+        {{end}}
+        - Event Explorer
+    </title>
 
-    <link
-        rel="stylesheet"
-        href="/static/css/style.css"
-    >
+    <link rel="stylesheet" href="/static/css/style.css?v=4">
 
 </head>
 
@@ -23,114 +27,279 @@
 
 <header class="navbar">
 
-    <a href="/" class="brand">
-        <span class="brand-mark">e.</span>
-        <span>eventexplorer</span>
-    </a>
+    <div class="nav-container">
 
-    <nav>
-        <a href="/" class="nav-link">
-            Discover
+        <a href="/" class="brand">
+
+            <span class="brand-logo">
+                e.
+            </span>
+
+            <span class="brand-name">
+                eventexplorer
+            </span>
+
         </a>
-    </nav>
+
+        <nav>
+
+            <a href="/" class="nav-link">
+                Discover
+            </a>
+
+        </nav>
+
+    </div>
 
 </header>
 
-<main class="page-container">
+
+<main class="details-page">
+
+    <!-- BACK LINK -->
 
     <a
         href="/events"
-        class="back-link"
+        class="details-back"
     >
         ← Back to events
     </a>
 
+
     {{if .Page.Error}}
 
-        <div class="error-message">
-            {{.Page.Error}}
-        </div>
+        <!-- ERROR -->
+
+        <section class="details-error">
+
+            <div class="section-eyebrow">
+                EVENT ERROR
+            </div>
+
+            <h1>
+                Event unavailable
+            </h1>
+
+            <p>
+                {{.Page.Error}}
+            </p>
+
+            <a
+                href="/"
+                class="explore-button"
+            >
+                Find another event
+                <span>→</span>
+            </a>
+
+        </section>
+
 
     {{else}}
 
-        <article class="details-card">
+        <!-- =========================
+             DETAILS LAYOUT
+        ========================== -->
 
-            {{if .Page.Event.ImageURL}}
+        <section class="details-layout">
 
-                <img
-                    src="{{.Page.Event.ImageURL}}"
-                    alt="{{.Page.Event.Title}}"
-                    class="details-image"
-                >
 
-            {{else}}
+            <!-- =========================
+                 LEFT SIDE
+            ========================== -->
 
-                <div class="details-placeholder">
-                    Event image unavailable
-                </div>
+            <div class="details-main">
 
-            {{end}}
 
-            <div class="details-content">
+                <!-- EVENT IMAGE -->
 
-                <span class="event-category">
-                    {{.Page.Event.Category}}
-                </span>
+                <div class="details-image-wrapper">
 
-                <h1>
-                    {{.Page.Event.Title}}
-                </h1>
+                    {{if .Page.Event.ImageURL}}
 
-                <div class="details-meta">
+                        <img
+                            src="{{.Page.Event.ImageURL}}"
+                            alt="{{.Page.Event.Title}}"
+                            class="details-image"
+                        >
 
-                    <p>
-                        <strong>Date</strong>
-                        {{.Page.Event.Date}}
-                    </p>
+                    {{else}}
 
-                    <p>
-                        <strong>Location</strong>
-                        {{.Page.Event.Location}}
-                    </p>
+                        <div class="details-image-placeholder">
+                            <span>EVENT</span>
+                        </div>
+
+                    {{end}}
 
                 </div>
 
-                {{if .Page.Event.Description}}
 
-                    <div class="description">
-                        <h2>About this event</h2>
+                <!-- EVENT TITLE -->
+
+                <div class="details-heading">
+
+                    <div class="details-category">
+                        {{.Page.Event.Category}}
+                    </div>
+
+                    <h1>
+                        {{.Page.Event.Title}}
+                    </h1>
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <section class="details-description">
+
+                    <div class="section-eyebrow">
+                        ABOUT THIS EVENT
+                    </div>
+
+                    <h2>
+                        About this event
+                    </h2>
+
+                    {{if .Page.Event.Description}}
 
                         <p>
                             {{.Page.Event.Description}}
                         </p>
-                    </div>
 
-                {{else}}
+                    {{else}}
 
-                    <div class="empty-message">
-                        No description is available.
-                    </div>
+                        <p>
+                            No description is available for this event.
+                        </p>
 
-                {{end}}
+                    {{end}}
 
-                <a
-                    href="/redirect/{{.Page.Event.ID}}"
-                    class="button primary"
-                >
-                    View Tickets
-                </a>
+                </section>
+
 
             </div>
 
-        </article>
+
+            <!-- =========================
+                 RIGHT SIDEBAR
+            ========================== -->
+
+            <aside class="details-sidebar">
+
+
+                <div class="details-sidebar-eyebrow">
+                    MAKE A PLAN
+                </div>
+
+
+                <h2>
+                    The details
+                </h2>
+
+
+                <!-- WHEN -->
+
+                <div class="details-info">
+
+                    <div class="details-info-label">
+                        WHEN
+                    </div>
+
+                    <div class="details-info-value">
+                        {{.Page.Event.Date}}
+                    </div>
+
+                </div>
+
+
+                <!-- WHERE -->
+
+                <div class="details-info">
+
+                    <div class="details-info-label">
+                        WHERE
+                    </div>
+
+                    <div class="details-info-value">
+                        {{.Page.Event.Location}}
+                    </div>
+
+                </div>
+
+
+                <!-- CATEGORY -->
+
+                <div class="details-info">
+
+                    <div class="details-info-label">
+                        CATEGORY
+                    </div>
+
+                    <div class="details-info-value">
+                        {{.Page.Event.Category}}
+                    </div>
+
+                </div>
+
+
+                <!-- TICKET -->
+
+                <div class="details-ticket">
+
+                    <a
+                        href="/redirect/{{.Page.Event.ID}}"
+                        class="ticket-button"
+                    >
+
+                        <span>
+                            View tickets
+                        </span>
+
+                        <span>
+                            ↗
+                        </span>
+
+                    </a>
+
+
+                    <p>
+                        Opens the official ticket page for this event.
+                    </p>
+
+                </div>
+
+
+            </aside>
+
+
+        </section>
 
     {{end}}
 
 </main>
 
+
 <footer class="footer">
-    <p>Event Explorer</p>
+
+    <div class="footer-container">
+
+        <div>
+            Event Explorer
+            <span>/</span>
+            Beego internship preview
+        </div>
+
+        <div>
+            HTML + CSS + JavaScript
+            <span>/</span>
+            API &amp; route guide
+        </div>
+
+    </div>
+
 </footer>
+
 
 </body>
 </html>
