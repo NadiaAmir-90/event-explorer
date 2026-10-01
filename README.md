@@ -4,38 +4,22 @@ A server-side rendered event discovery application built with Go and Beego. It a
 
 ## How to Run
 
-### 1. Clone the GitHub Repository
-
 ```bash
 git clone <https://github.com/NadiaAmir-90/event-explorer>
 cd event-explorer
 ```
-
-### 2. Set Environment Variables
-
-The application requires API keys for Ticketmaster and Google Places.
-
 ```bash
 export TICKETMASTER_API_KEY="your_ticketmaster_api_key"
 export GOOGLE_PLACES_API_KEY="your_google_places_api_key"
 ```
 
-### 3. Install Dependencies
-
-Download the required Go dependencies:
-
 ```bash
 go mod download
 ```
 
-### 4. Run the Application
-
-Start the Beego application:
-
 ```bash
 bee run
 ```
-
 The application will be available at:
 
 ```
@@ -109,12 +93,6 @@ The application follows an MVC-style architecture with a service layer.
 
 ```
 GET /events?city={city}&countryCode={countryCode}
-```
-
-Example:
-
-```
-GET /events?city=Toronto&countryCode=CA
 ```
 
 ### Event Details
